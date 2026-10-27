@@ -1,6 +1,6 @@
 package database;
 
-import Util.Reference;
+import util.Reference;
 
 import java.io.File;
 import java.sql.*;
@@ -13,6 +13,8 @@ public class Database {
     private static final String createTableStatement = "CREATE TABLE IF NOT EXISTS gameList (id INTEGER PRIMARY KEY, name TEXT NOT NULL, path TEXT NOT NULL UNIQUE, images TEXT)";
     private static final String addEntryStatement = "INSERT INTO gameList (name, path, images) VALUES (?, ?, ?)";
     private static final String getEntriesStatement = "SELECT * FROM gameList ORDER BY name";
+    private static final String removeEntryStatement = "DELETE FROM gameList WHERE id = ?";
+    private static final String editEntryStatement = "UPDATE gameList SET name = ?, path = ?, images = ? WHERE id = ?";
 
     public static void Init() throws SQLException {
         Connection conn = DriverManager.getConnection(URL);
@@ -52,6 +54,51 @@ public class Database {
     }
 
 
+    public static boolean UpdateGame(Reference.Game updatedGame) {
+        String pathStr = updatedGame.path.getAbsolutePath();
+        String imagesStr = Reference.gson.toJson(updatedGame.images.stream().map(File::getAbsolutePath).toList());
+
+        try {
+            Connection conn = DriverManager.getConnection(URL);
+            PreparedStatement stmt = conn.prepareStatement(removeEntryStatement);
+
+            stmt.setString(1, updatedGame.name);
+            stmt.setString(2, pathStr);
+            stmt.setString(3, imagesStr);
+
+            stmt.setInt(4, updatedGame.id);
+
+            stmt.execute();
+
+            stmt.close();
+            conn.close();
+        } catch (SQLException e){
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public static boolean RemoveGame(int id) {
+        try {
+            Connection conn = DriverManager.getConnection(URL);
+            PreparedStatement stmt = conn.prepareStatement(removeEntryStatement);
+
+            stmt.setInt(1, id);
+
+            stmt.execute();
+
+            stmt.close();
+            conn.close();
+        } catch (SQLException e){
+            return false;
+        }
+
+        return true;
+    }
+
+
     public static List<Reference.Game> GetAllGames() {
         List<Reference.Game> toReturn = new ArrayList<>();
 
@@ -66,7 +113,7 @@ public class Database {
                 String path = results.getString("path");
                 List<String> images = Reference.gson.fromJson(results.getString("images"), List.class);
 
-                toReturn.add(new Reference.Game(name, new File(path),
+                toReturn.add(new Reference.Game(results.getInt("id"), name, new File(path),
                         images.stream().map(File::new).toList()));
             }
 

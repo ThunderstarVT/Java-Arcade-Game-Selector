@@ -1,20 +1,25 @@
 {
-  "TimePosition": {
-    "x": 50,
-    "y": 80
-  },
-  "TimeSize": 10.0,
-  "DatePosition": {
-    "x": 50,
-    "y": 90
-  },
-  "DateSize": 15.0,
-  "PageSize": {
-    "x": 10,
-    "y": 10,
-    "width": 80,
-    "height": 60
-  },
-  "PageRows": 3,
-  "PageColumns": 4
+    "TimePosition": {
+        "x": 50,
+        "y": 80
+    },
+    "TimeSize": 10.0,
+    "TitlePosition": {
+        "x": 50,
+        "y": 15
+    },
+    "TitleSize": 10.0,
+    "DatePosition": {
+        "x": 50,
+        "y": 90
+    },
+    "DateSize": 15.0,
+    "PageSize": {
+        "x": 5,
+        "y": 5,
+        "width": 90,
+        "height": 65
+    },
+    "PageRows": 3,
+    "PageColumns": 4
 }
