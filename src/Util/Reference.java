@@ -4,11 +4,14 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Reference {
     public static final Gson gson = new Gson();
 
-
+    public static final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     public static class Game {
         public final String name;

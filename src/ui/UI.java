@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,8 +16,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.Future;
 
 public class UI extends JFrame {
+    public static class UILayout {
+        public final Point TimePosition;
+        public final float TimeSize;
+        public final Point DatePosition;
+        public final float DateSize;
+        public final Rectangle PageSize;
+        public final int PageRows;
+        public final int PageColumns;
+
+        public UILayout(Point timePosition, float timeSize, Point datePosition, float dateSize, Rectangle pageSize, int pageRows, int pageColumns) {
+            TimePosition = timePosition;
+            TimeSize = timeSize;
+            DatePosition = datePosition;
+            DateSize = dateSize;
+            PageSize = pageSize;
+            PageRows = pageRows;
+            PageColumns = pageColumns;
+        }
+    }
+
     private static final JLabel viewLabel = new JLabel();
 
     private static final Font defaultFont = new Font("Consolas", Font.BOLD, 28);
@@ -25,6 +47,12 @@ public class UI extends JFrame {
     private static final Image foregroundImage;
     private static final Image gameTemplateImage;
     private static final Image gamePlaceholderImage;
+
+
+    private static UILayout layout;
+
+
+    private static List<Future<?>> futures = new ArrayList<>();
 
 
     private static List<Reference.Game> games = new ArrayList<>();
@@ -42,6 +70,8 @@ public class UI extends JFrame {
 
     public UI () throws IOException {
         super("Test");
+
+        layout = Reference.gson.fromJson(new FileReader(".\\data\\resources\\layout.json"), UILayout.class);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(MAXIMIZED_BOTH);
@@ -90,35 +120,57 @@ public class UI extends JFrame {
 
         BufferedImage noiseImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
         Random random = new Random();
-        for (int x = 0; x < 64; x++) {
-            for (int y = 0; y < 64; y++) {
-                int v = 128 + random.nextInt(64);
+        for (int i = 0; i < 4; i++) {
+            int start = 16 * i;
+            int end = start + 16;
 
-                int rgb = (255 << 24) | (v << 16) | (v << 8) | v;
+            futures.add(Reference.executor.submit(() -> {
+                for (int x = start; x < end; x++) {
+                    for (int y = 0; y < 64; y++) {
+                        int v = 128 + random.nextInt(64);
 
-                noiseImage.setRGB(x, y, rgb);
+                        int rgb = (255 << 24) | (v << 16) | (v << 8) | v;
+
+                        noiseImage.setRGB(x, y, rgb);
+                    }
+                }
+            }));
+        }
+
+        for (Future<?> future : futures){
+            try {
+                future.get();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
+        futures.clear();
+
 
         //TODO: draw games
-        for (int page = -1; page < 2; page++) {
-            if (page < 0 || (page /* + current page */) * 12 > games.size()) continue;
+        for (int col = 0; col < layout.PageColumns; col++) {
+            for (int row = 0; row < layout.PageRows; row++) {
+                int index = (0 /* current page */) * 12 + row * 4 + col;
+                int _row = row;
+                int _col = col;
+                int _page = 0;
 
-            for (int col = 0; col < 4; col++) {
-                for (int row = 0; row < 3; row++) {
-                    int index = (page /* + current page */) * 12 + row * 4 + col;
-
+                futures.add(Reference.executor.submit(() -> {
                     Reference.Game game = index < games.size() ? games.get(index) : null;
 
-                    float x = 0.1f + 0.2f * col + 0.8f * page;
-                    float y = 0.1f + 0.2f * row;
+                    float x = (layout.PageSize.x + (float) layout.PageSize.width / layout.PageColumns * _col + layout.PageSize.width * _page) / 100f;
+                    float y = (layout.PageSize.y + (float) layout.PageSize.height / layout.PageRows * _row) / 100f;
 
                     Image game_img;
 
                     if (game != null) {
                         if (!game.images.isEmpty()) {
-                            game_img = ImageIO.read(game.images.getFirst());
+                            try {
+                                game_img = ImageIO.read(game.images.getFirst());
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                         } else {
                             game_img = gamePlaceholderImage;
                         }
@@ -128,10 +180,20 @@ public class UI extends JFrame {
 
                     game_img = MultiplyImages(gameTemplateImage, game_img);
 
-                    g.drawImage(game_img.getScaledInstance((int) (getWidth()/5f), (int) (getHeight()/5f), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
-                }
+                    g.drawImage(game_img.getScaledInstance((int) ((float) (getWidth() * layout.PageSize.width)/(100 * layout.PageColumns)), (int) ((float) (getHeight() * layout.PageSize.height)/(100 * layout.PageRows)), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
+                }));
             }
         }
+
+        for (Future<?> future : futures){
+            try {
+                future.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        futures.clear();
 
 
 
@@ -142,11 +204,11 @@ public class UI extends JFrame {
         String date_str = LocalDate.now().format(DateTimeFormatter.ofPattern("EEE d/M"));
 
         g.setColor(new Color(0x222222));
-        g.setFont(defaultFont.deriveFont(getHeight() / 10f));
-        g.drawString(time_str, (getWidth() + g.getFontMetrics().stringWidth("00:00") - 2 * g.getFontMetrics().stringWidth(time_str)) * 0.5f, getHeight() * 0.8f);
+        g.setFont(defaultFont.deriveFont(getHeight() / layout.TimeSize));
+        g.drawString(time_str, (getWidth() + g.getFontMetrics().stringWidth("00:00") - 2 * g.getFontMetrics().stringWidth(time_str)) * layout.TimePosition.x / 100f, getHeight() * layout.TimePosition.y / 100f);
 
-        g.setFont(defaultFont.deriveFont(getHeight() / 15f));
-        g.drawString(date_str, (getWidth() - g.getFontMetrics().stringWidth(date_str)) * 0.5f, getHeight() * 0.9f);
+        g.setFont(defaultFont.deriveFont(getHeight() / layout.DateSize));
+        g.drawString(date_str, (getWidth() - g.getFontMetrics().stringWidth(date_str)) * layout.DatePosition.x / 100f, getHeight() * layout.DatePosition.y / 100f);
 
 
 
