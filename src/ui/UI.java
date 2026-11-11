@@ -93,7 +93,7 @@ public class UI extends JFrame implements KeyListener {
     }
 
     public UI () throws IOException {
-        super("Test");
+        super("Java Arcade Game Selector");
 
         layout = Reference.gson.fromJson(new FileReader(".\\data\\resources\\layout.json"), UILayout.class);
 

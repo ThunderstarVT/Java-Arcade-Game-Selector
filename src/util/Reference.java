@@ -33,11 +33,7 @@ public class Reference {
 
         @Override
         public String toString() {
-            return "Game{" +
-                    "name='" + name + '\'' +
-                    ", path=" + path +
-                    ", images=" + images +
-                    '}';
+            return gson.toJson(this);
         }
     }
 
