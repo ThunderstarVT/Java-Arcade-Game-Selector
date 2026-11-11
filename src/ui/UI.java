@@ -228,7 +228,6 @@ public class UI extends JFrame implements KeyListener {
 
 
         if (selectedGameIndex < 0) {
-            //TODO: draw cursor
             float cursor_x = (layout.PageSize.x + (float) layout.PageSize.width / layout.PageColumns * cursor.x) / 100f;
             float cursor_y = (layout.PageSize.y + (float) layout.PageSize.height / layout.PageRows * cursor.y) / 100f;
 
@@ -417,7 +416,7 @@ public class UI extends JFrame implements KeyListener {
             }
 
             case KeyEvent.VK_F2 -> {
-                //TODO: show edit game window
+                // show edit game window
                 int index = page * layout.PageRows * layout.PageColumns + cursor.y * layout.PageColumns + cursor.x;
                 if (index < games.size()) {
                     EditGameDialog dialog = new EditGameDialog(null, games.get(index));
