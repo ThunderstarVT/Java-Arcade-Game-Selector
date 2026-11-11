@@ -19,7 +19,7 @@ public class EditGameDialog extends JDialog {
     private final int gameID;
 
     public EditGameDialog(Frame parent, Reference.Game game) {
-        super(parent, "Add Game", true);
+        super(parent, "Edit Game", true);
 
 
         gameID = game.id;
