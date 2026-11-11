@@ -4,16 +4,19 @@
         "y": 80
     },
     "TimeSize": 10.0,
+    "TimeColor": -16777216,
     "TitlePosition": {
         "x": 50,
         "y": 15
     },
     "TitleSize": 10.0,
+    "TitleColor": -16777216,
     "DatePosition": {
         "x": 50,
         "y": 90
     },
     "DateSize": 15.0,
+    "DateColor": -16777216,
     "PageSize": {
         "x": 5,
         "y": 5,

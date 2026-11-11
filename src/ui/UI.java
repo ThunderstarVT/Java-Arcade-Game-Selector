@@ -28,21 +28,27 @@ public class UI extends JFrame implements KeyListener {
     public static class UILayout {
         public final Point TimePosition;
         public final float TimeSize;
+        public final int TimeColor;
         public final Point TitlePosition;
         public final float TitleSize;
+        public final int TitleColor;
         public final Point DatePosition;
         public final float DateSize;
+        public final int DateColor;
         public final Rectangle PageSize;
         public final int PageRows;
         public final int PageColumns;
 
-        public UILayout(Point timePosition, float timeSize, Point titlePosition, float titleSize, Point datePosition, float dateSize, Rectangle pageSize, int pageRows, int pageColumns) {
+        public UILayout(Point timePosition, float timeSize, Color timeColor, Point titlePosition, float titleSize, Color titleColor, Point datePosition, float dateSize, Color dateColor, Rectangle pageSize, int pageRows, int pageColumns) {
             TimePosition = timePosition;
             TimeSize = timeSize;
+            TimeColor = timeColor.getRGB();
             TitlePosition = titlePosition;
             TitleSize = titleSize;
+            TitleColor = titleColor.getRGB();
             DatePosition = datePosition;
             DateSize = dateSize;
+            DateColor = dateColor.getRGB();
             PageSize = pageSize;
             PageRows = pageRows;
             PageColumns = pageColumns;
@@ -261,15 +267,17 @@ public class UI extends JFrame implements KeyListener {
         String time_str = LocalTime.now().format(DateTimeFormatter.ofPattern("H:mm"));
         String date_str = LocalDate.now().format(DateTimeFormatter.ofPattern("EEE d/M"));
 
-        g.setColor(new Color(0x222222));
+        g.setColor(new Color(layout.TitleColor));
         if (selectedGameIndex >= 0 && selectedGameIndex < games.size()) {
             g.setFont(defaultFont.deriveFont(getHeight() / layout.TitleSize));
             g.drawString(games.get(selectedGameIndex).name, (getWidth() + g.getFontMetrics().stringWidth(games.get(selectedGameIndex).name) - 2 * g.getFontMetrics().stringWidth(games.get(selectedGameIndex).name)) * layout.TitlePosition.x / 100f, getHeight() * layout.TitlePosition.y / 100f);
         }
 
+        g.setColor(new Color(layout.TimeColor));
         g.setFont(defaultFont.deriveFont(getHeight() / layout.TimeSize));
         g.drawString(time_str, (getWidth() + g.getFontMetrics().stringWidth("00:00") - 2 * g.getFontMetrics().stringWidth(time_str)) * layout.TimePosition.x / 100f, getHeight() * layout.TimePosition.y / 100f);
 
+        g.setColor(new Color(layout.DateColor));
         g.setFont(defaultFont.deriveFont(getHeight() / layout.DateSize));
         g.drawString(date_str, (getWidth() - g.getFontMetrics().stringWidth(date_str)) * layout.DatePosition.x / 100f, getHeight() * layout.DatePosition.y / 100f);
 
