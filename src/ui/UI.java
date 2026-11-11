@@ -403,13 +403,18 @@ public class UI extends JFrame implements KeyListener {
             }
 
             case KeyEvent.VK_F1 -> {
-                //TODO: show add game window
+                // show add game window
                 AddGameDialog dialog = new AddGameDialog(null);
                 dialog.setVisible(true);
             }
 
             case KeyEvent.VK_F2 -> {
                 //TODO: show edit game window
+                int index = page * layout.PageRows * layout.PageColumns + cursor.y * layout.PageColumns + cursor.x;
+                if (index < games.size()) {
+                    EditGameDialog dialog = new EditGameDialog(null, games.get(index));
+                    dialog.setVisible(true);
+                }
             }
         }
     }

@@ -60,7 +60,7 @@ public class Database {
 
         try {
             Connection conn = DriverManager.getConnection(URL);
-            PreparedStatement stmt = conn.prepareStatement(removeEntryStatement);
+            PreparedStatement stmt = conn.prepareStatement(editEntryStatement);
 
             stmt.setString(1, updatedGame.name);
             stmt.setString(2, pathStr);
