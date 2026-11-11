@@ -1,11 +1,7 @@
+import database.Database;
 import ui.UI;
 
-import java.awt.*;
 import java.io.IOException;
-
-import database.Database;
-import util.Reference;
-
 import java.sql.SQLException;
 
 public class Main {
