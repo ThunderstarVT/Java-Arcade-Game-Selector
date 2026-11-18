@@ -8,11 +8,13 @@ import com.sun.jna.ptr.IntByReference;
 
 import java.io.File;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Reference {
     public static final Gson gson = new Gson();
+    public static final Random random = new Random();
 
     public static final ExecutorService executor = Executors.newFixedThreadPool(4);
 

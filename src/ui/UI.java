@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -38,8 +39,10 @@ public class UI extends JFrame implements KeyListener {
         public final Rectangle PageSize;
         public final int PageRows;
         public final int PageColumns;
+        public final Rectangle LeftArrow;
+        public final Rectangle RightArrow;
 
-        public UILayout(Point timePosition, float timeSize, Color timeColor, Point titlePosition, float titleSize, Color titleColor, Point datePosition, float dateSize, Color dateColor, Rectangle pageSize, int pageRows, int pageColumns) {
+        public UILayout(Point timePosition, float timeSize, Color timeColor, Point titlePosition, float titleSize, Color titleColor, Point datePosition, float dateSize, Color dateColor, Rectangle pageSize, int pageRows, int pageColumns, Rectangle leftArrow, Rectangle rightArrow) {
             TimePosition = timePosition;
             TimeSize = timeSize;
             TimeColor = timeColor.getRGB();
@@ -52,6 +55,8 @@ public class UI extends JFrame implements KeyListener {
             PageSize = pageSize;
             PageRows = pageRows;
             PageColumns = pageColumns;
+            LeftArrow = leftArrow;
+            RightArrow = rightArrow;
         }
     }
 
@@ -64,6 +69,8 @@ public class UI extends JFrame implements KeyListener {
     private static final Image gameTemplateImage;
     private static final Image gamePlaceholderImage;
     private static final Image gameCursorImage;
+    private static final Image leftArrowImage;
+    private static final Image rightArrowImage;
 
 
     private static UILayout layout;
@@ -87,6 +94,8 @@ public class UI extends JFrame implements KeyListener {
             gameTemplateImage = ImageIO.read(new File(".\\data\\resources\\game template.png"));
             gamePlaceholderImage = ImageIO.read(new File(".\\data\\resources\\game placeholder.png"));
             gameCursorImage = ImageIO.read(new File(".\\data\\resources\\game cursor.png"));
+            leftArrowImage = ImageIO.read(new File(".\\data\\resources\\left arrow.png"));
+            rightArrowImage = ImageIO.read(new File(".\\data\\resources\\right arrow.png"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -100,6 +109,10 @@ public class UI extends JFrame implements KeyListener {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(MAXIMIZED_BOTH);
         setUndecorated(true);
+
+        BufferedImage cursor_img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Cursor blank_cursor = Toolkit.getDefaultToolkit().createCustomCursor(cursor_img, new Point(), "blank cursor");
+        getContentPane().setCursor(blank_cursor);
 
         add(viewLabel);
 
@@ -117,7 +130,7 @@ public class UI extends JFrame implements KeyListener {
                 delta_time[0] = System.nanoTime()/1e9 - begin_time[0];
                 begin_time[0] = System.nanoTime()/1e9;
             }
-        }, 0, 40);
+        }, 0, 1);
 
         new Timer().schedule(new TimerTask() {
             @Override
@@ -150,7 +163,6 @@ public class UI extends JFrame implements KeyListener {
 
 
         BufferedImage noiseImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-        Random random = new Random();
         for (int i = 0; i < 4; i++) {
             int start = 16 * i;
             int end = start + 16;
@@ -158,7 +170,7 @@ public class UI extends JFrame implements KeyListener {
             futures.add(Reference.executor.submit(() -> {
                 for (int x = start; x < end; x++) {
                     for (int y = 0; y < 64; y++) {
-                        int v = 128 + random.nextInt(64);
+                        int v = 128 + Reference.random.nextInt(64);
 
                         int rgb = (255 << 24) | (v << 16) | (v << 8) | v;
 
@@ -178,7 +190,12 @@ public class UI extends JFrame implements KeyListener {
 
         futures.clear();
 
-
+        Image noise_game[] = new Image[1];
+        try {
+            noise_game[0] = MultiplyImages(gameTemplateImage, noiseImage, 4);
+        } catch (ExecutionException | InterruptedException e) {
+            noise_game[0] = gameTemplateImage;
+        }
 
         for (int col = 0; col < layout.PageColumns; col++) {
             for (int row = 0; row < layout.PageRows; row++) {
@@ -205,10 +222,15 @@ public class UI extends JFrame implements KeyListener {
                             game_img = gamePlaceholderImage;
                         }
                     } else {
-                        game_img = noiseImage;
+                        g.drawImage(noise_game[0].getScaledInstance((int) ((float) (getWidth() * layout.PageSize.width)/(100 * layout.PageColumns)), (int) ((float) (getHeight() * layout.PageSize.height)/(100 * layout.PageRows)), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
+                        return;
                     }
 
-                    game_img = MultiplyImages(gameTemplateImage, game_img);
+                    try {
+                        game_img = MultiplyImages(gameTemplateImage, game_img, 1);
+                    } catch (ExecutionException | InterruptedException e) {
+                        game_img = gameTemplateImage;
+                    }
 
                     g.drawImage(game_img.getScaledInstance((int) ((float) (getWidth() * layout.PageSize.width)/(100 * layout.PageColumns)), (int) ((float) (getHeight() * layout.PageSize.height)/(100 * layout.PageRows)), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
                 }));
@@ -225,7 +247,20 @@ public class UI extends JFrame implements KeyListener {
 
         futures.clear();
 
-
+        if (page > 0) {
+            float x = layout.LeftArrow.x / 100f;
+            float y = layout.LeftArrow.y / 100f;
+            g.drawImage(leftArrowImage.getScaledInstance((int) ((float) (getWidth() * layout.LeftArrow.width)/100),
+                    (int) ((float) (getHeight() * layout.LeftArrow.height)/100), 0), (int) (x * getWidth()),
+                    (int) (y * getHeight()), null);
+        }
+        if (page < (games.size() - 1) / (layout.PageRows * layout.PageColumns)) {
+            float x = layout.RightArrow.x / 100f;
+            float y = layout.RightArrow.y / 100f;
+            g.drawImage(rightArrowImage.getScaledInstance((int) ((float) (getWidth() * layout.RightArrow.width)/100),
+                    (int) ((float) (getHeight() * layout.RightArrow.height)/100), 0), (int) (x * getWidth()),
+                    (int) (y * getHeight()), null);
+        }
 
         if (selectedGameIndex < 0) {
             float cursor_x = (layout.PageSize.x + (float) layout.PageSize.width / layout.PageColumns * cursor.x) / 100f;
@@ -250,13 +285,17 @@ public class UI extends JFrame implements KeyListener {
                 } else {
                     game_img = gamePlaceholderImage;
                 }
+
+                try {
+                    game_img = MultiplyImages(gameTemplateImage, game_img, 4);
+                } catch (ExecutionException | InterruptedException e) {
+                    game_img = gameTemplateImage;
+                }
+
+                g.drawImage(game_img.getScaledInstance((int) ((float) (getWidth() * layout.PageSize.width)/100), (int) ((float) (getHeight() * layout.PageSize.height)/100), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
             } else {
-                game_img = noiseImage;
+                g.drawImage(noise_game[0].getScaledInstance((int) ((float) (getWidth() * layout.PageSize.width)/100), (int) ((float) (getHeight() * layout.PageSize.height)/100), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
             }
-
-            game_img = MultiplyImages(gameTemplateImage, game_img);
-
-            g.drawImage(game_img.getScaledInstance((int) ((float) (getWidth() * layout.PageSize.width)/100), (int) ((float) (getHeight() * layout.PageSize.height)/100), 0), (int) (x * getWidth()), (int) (y * getHeight()), null);
         }
 
 
@@ -288,7 +327,7 @@ public class UI extends JFrame implements KeyListener {
     }
 
 
-    private static Image MultiplyImages(Image image1, Image image2) {
+    private static Image MultiplyImages(Image image1, Image image2, int threads) throws ExecutionException, InterruptedException {
         int width = image1.getWidth(null);
         int height = image1.getHeight(null);
 
@@ -299,17 +338,44 @@ public class UI extends JFrame implements KeyListener {
         img2.createGraphics().drawImage(image2.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
 
         BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int p1 = img1.getRGB(x, y);
-                int p2 = img2.getRGB(x, y);
 
-                int a = ((p1 >> 24) & 0xFF) * ((p2 >> 24) & 0xFF) / 255;
-                int r = ((p1 >> 16) & 0xFF) * ((p2 >> 16) & 0xFF) / 255;
-                int g = ((p1 >> 8) & 0xFF) * ((p2 >> 8) & 0xFF) / 255;
-                int b = (p1 & 0xFF) * (p2 & 0xFF) / 255;
+        if (threads > 1) {
+            List<Future<?>> futures = new ArrayList<>();
 
-                result.setRGB(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+            for (int i = 0; i < threads; i++) {
+                int thread = i;
+
+                futures.add(Reference.executor.submit(() -> {
+                    for (int y = thread; y < height; y += threads) {
+                        for (int x = 0; x < width; x++) {
+                            int p1 = img1.getRGB(x, y);
+                            int p2 = img2.getRGB(x, y);
+
+                            int a = ((p1 >> 24) & 0xFF) * ((p2 >> 24) & 0xFF) / 255;
+                            int r = ((p1 >> 16) & 0xFF) * ((p2 >> 16) & 0xFF) / 255;
+                            int g = ((p1 >> 8) & 0xFF) * ((p2 >> 8) & 0xFF) / 255;
+                            int b = (p1 & 0xFF) * (p2 & 0xFF) / 255;
+
+                            result.setRGB(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+                        }
+                    }
+                }));
+            }
+
+            for (Future<?> future : futures) future.get();
+        } else {
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    int p1 = img1.getRGB(x, y);
+                    int p2 = img2.getRGB(x, y);
+
+                    int a = ((p1 >> 24) & 0xFF) * ((p2 >> 24) & 0xFF) / 255;
+                    int r = ((p1 >> 16) & 0xFF) * ((p2 >> 16) & 0xFF) / 255;
+                    int g = ((p1 >> 8) & 0xFF) * ((p2 >> 8) & 0xFF) / 255;
+                    int b = (p1 & 0xFF) * (p2 & 0xFF) / 255;
+
+                    result.setRGB(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+                }
             }
         }
 
@@ -361,7 +427,7 @@ public class UI extends JFrame implements KeyListener {
                 cursor.x++;
 
                 if (cursor.x >= layout.PageColumns) {
-                    if (page < (games.size() + layout.PageRows * layout.PageColumns - 1) / (layout.PageRows * layout.PageColumns)) {
+                    if (page < (games.size() - 1) / (layout.PageRows * layout.PageColumns)) {
                         page++;
                         cursor.x = 0;
                     } else {
@@ -376,7 +442,8 @@ public class UI extends JFrame implements KeyListener {
                     if (index < games.size()) selectedGameIndex = index;
                 } else {
                     try {
-                        Process process = new ProcessBuilder(games.get(selectedGameIndex).path.getAbsolutePath()).start();
+                        Process process = new ProcessBuilder(games.get(selectedGameIndex).path.getAbsolutePath())
+                                .directory(games.get(selectedGameIndex).path.getParentFile()).start();
 
                         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
 
