@@ -19,30 +19,17 @@ public class Reference {
     public static final ExecutorService executor = Executors.newFixedThreadPool(4);
 
 
-
-    public static class Game {
-        public final int id;
-        public final String name;
-        public final File path;
-        public final List<File> images;
-
-        public Game(int id, String name, File path, List<File> images) {
-            this.id = id;
-            this.name = name;
-            this.path = path;
-            this.images = images;
-        }
-
+    public record Game(int id, String name, File path, List<File> images) {
         @Override
-        public String toString() {
-            return gson.toJson(this);
+            public String toString() {
+                return gson.toJson(this);
+            }
         }
-    }
 
 
 
     public static WinDef.HWND FindWindow(long targetPid) {
-        WinDef.HWND result[] = new WinDef.HWND[1];
+        WinDef.HWND[] result = new WinDef.HWND[1];
 
         User32.INSTANCE.EnumWindows((window, data) -> {
             if (!User32.INSTANCE.IsWindowVisible(window)) return true;

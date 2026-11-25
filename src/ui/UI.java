@@ -26,39 +26,23 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class UI extends JFrame implements KeyListener {
-    public static class UILayout {
-        public final Point TimePosition;
-        public final float TimeSize;
-        public final int TimeColor;
-        public final Point TitlePosition;
-        public final float TitleSize;
-        public final int TitleColor;
-        public final Point DatePosition;
-        public final float DateSize;
-        public final int DateColor;
-        public final Rectangle PageSize;
-        public final int PageRows;
-        public final int PageColumns;
-        public final Rectangle LeftArrow;
-        public final Rectangle RightArrow;
-
-        public UILayout(Point timePosition, float timeSize, Color timeColor, Point titlePosition, float titleSize, Color titleColor, Point datePosition, float dateSize, Color dateColor, Rectangle pageSize, int pageRows, int pageColumns, Rectangle leftArrow, Rectangle rightArrow) {
-            TimePosition = timePosition;
-            TimeSize = timeSize;
-            TimeColor = timeColor.getRGB();
-            TitlePosition = titlePosition;
-            TitleSize = titleSize;
-            TitleColor = titleColor.getRGB();
-            DatePosition = datePosition;
-            DateSize = dateSize;
-            DateColor = dateColor.getRGB();
-            PageSize = pageSize;
-            PageRows = pageRows;
-            PageColumns = pageColumns;
-            LeftArrow = leftArrow;
-            RightArrow = rightArrow;
-        }
-    }
+    public record UILayout(
+            Point TimePosition,
+            float TimeSize,
+            int TimeColor,
+            Point TitlePosition,
+            float TitleSize,
+            int TitleColor,
+            Point DatePosition,
+            float DateSize,
+            int DateColor,
+            Rectangle PageSize,
+            int PageRows,
+            int PageColumns,
+            Rectangle
+            LeftArrow,
+            Rectangle RightArrow
+    ) { }
 
     private static final JLabel viewLabel = new JLabel();
 
@@ -76,7 +60,7 @@ public class UI extends JFrame implements KeyListener {
     private static UILayout layout;
 
     private static int page = 0;
-    private static Point cursor = new Point(0, 0);
+    private static final Point cursor = new Point(0, 0);
 
     private static int selectedGameIndex = -1;
     private static int previewImageIndex = 0;
@@ -140,7 +124,7 @@ public class UI extends JFrame implements KeyListener {
                 previewImageIndex++;
                 if (selectedGameIndex < 0) {
                     previewImageIndex = 0;
-                } else if (selectedGameIndex < games.size() && previewImageIndex > games.get(selectedGameIndex).images.size() - 1) {
+                } else if (selectedGameIndex < games.size() && previewImageIndex > games.get(selectedGameIndex).images().size() - 1) {
                     previewImageIndex = 0;
                 }
             }
@@ -190,7 +174,7 @@ public class UI extends JFrame implements KeyListener {
 
         futures.clear();
 
-        Image noise_game[] = new Image[1];
+        Image[] noise_game = new Image[1];
         try {
             noise_game[0] = MultiplyImages(gameTemplateImage, noiseImage, 4);
         } catch (ExecutionException | InterruptedException e) {
@@ -212,9 +196,9 @@ public class UI extends JFrame implements KeyListener {
                     Image game_img;
 
                     if (game != null) {
-                        if (!game.images.isEmpty()) {
+                        if (!game.images().isEmpty()) {
                             try {
-                                game_img = ImageIO.read(game.images.getFirst());
+                                game_img = ImageIO.read(game.images().getFirst());
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -276,9 +260,9 @@ public class UI extends JFrame implements KeyListener {
             Image game_img;
 
             if (game != null) {
-                if (!game.images.isEmpty()) {
+                if (!game.images().isEmpty()) {
                     try {
-                        game_img = ImageIO.read(game.images.get(previewImageIndex));
+                        game_img = ImageIO.read(game.images().get(previewImageIndex));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -308,7 +292,7 @@ public class UI extends JFrame implements KeyListener {
         g.setColor(new Color(layout.TitleColor));
         if (selectedGameIndex >= 0 && selectedGameIndex < games.size()) {
             g.setFont(defaultFont.deriveFont(getHeight() / layout.TitleSize));
-            g.drawString(games.get(selectedGameIndex).name, (getWidth() + g.getFontMetrics().stringWidth(games.get(selectedGameIndex).name) - 2 * g.getFontMetrics().stringWidth(games.get(selectedGameIndex).name)) * layout.TitlePosition.x / 100f, getHeight() * layout.TitlePosition.y / 100f);
+            g.drawString(games.get(selectedGameIndex).name(), (getWidth() + g.getFontMetrics().stringWidth(games.get(selectedGameIndex).name()) - 2 * g.getFontMetrics().stringWidth(games.get(selectedGameIndex).name())) * layout.TitlePosition.x / 100f, getHeight() * layout.TitlePosition.y / 100f);
         }
 
         g.setColor(new Color(layout.TimeColor));
@@ -442,8 +426,8 @@ public class UI extends JFrame implements KeyListener {
                     if (index < games.size()) selectedGameIndex = index;
                 } else {
                     try {
-                        Process process = new ProcessBuilder(games.get(selectedGameIndex).path.getAbsolutePath())
-                                .directory(games.get(selectedGameIndex).path.getParentFile()).start();
+                        Process process = new ProcessBuilder(games.get(selectedGameIndex).path().getAbsolutePath())
+                                .directory(games.get(selectedGameIndex).path().getParentFile()).start();
 
                         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
 

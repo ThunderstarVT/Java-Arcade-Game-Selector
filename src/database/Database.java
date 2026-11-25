@@ -55,18 +55,18 @@ public class Database {
 
 
     public static boolean UpdateGame(Reference.Game updatedGame) {
-        String pathStr = updatedGame.path.getAbsolutePath();
-        String imagesStr = Reference.gson.toJson(updatedGame.images.stream().map(File::getAbsolutePath).toList());
+        String pathStr = updatedGame.path().getAbsolutePath();
+        String imagesStr = Reference.gson.toJson(updatedGame.images().stream().map(File::getAbsolutePath).toList());
 
         try {
             Connection conn = DriverManager.getConnection(URL);
             PreparedStatement stmt = conn.prepareStatement(editEntryStatement);
 
-            stmt.setString(1, updatedGame.name);
+            stmt.setString(1, updatedGame.name());
             stmt.setString(2, pathStr);
             stmt.setString(3, imagesStr);
 
-            stmt.setInt(4, updatedGame.id);
+            stmt.setInt(4, updatedGame.id());
 
             stmt.execute();
 

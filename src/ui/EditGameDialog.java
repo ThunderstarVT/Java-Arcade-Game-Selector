@@ -14,7 +14,6 @@ public class EditGameDialog extends JDialog {
     private final JTextField executableField = new JTextField();
 
     private final DefaultListModel<File> imageModel = new DefaultListModel<>();
-    private final JList<File> imageList = new JList<>(imageModel);
 
     private final int gameID;
 
@@ -22,12 +21,12 @@ public class EditGameDialog extends JDialog {
         super(parent, "Edit Game", true);
 
 
-        gameID = game.id;
+        gameID = game.id();
 
-        nameField.setText(game.name);
-        executableField.setText(game.path.getAbsolutePath());
+        nameField.setText(game.name());
+        executableField.setText(game.path().getAbsolutePath());
 
-        for (File file : game.images)
+        for (File file : game.images())
             imageModel.addElement(file);
 
 
@@ -59,6 +58,7 @@ public class EditGameDialog extends JDialog {
         executablePanel.add(selectExecutableButton, BorderLayout.EAST);
 
 
+        JList<File> imageList = new JList<>(imageModel);
         imageList.setVisibleRowCount(5);
         imageList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 

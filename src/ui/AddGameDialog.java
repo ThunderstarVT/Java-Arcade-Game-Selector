@@ -13,7 +13,6 @@ public class AddGameDialog extends JDialog {
     private final JTextField executableField = new JTextField();
 
     private final DefaultListModel<File> imageModel = new DefaultListModel<>();
-    private final JList<File> imageList = new JList<>(imageModel);
 
     public AddGameDialog(Frame parent) {
         super(parent, "Add Game", true);
@@ -46,6 +45,7 @@ public class AddGameDialog extends JDialog {
         executablePanel.add(selectExecutableButton, BorderLayout.EAST);
 
 
+        JList<File> imageList = new JList<>(imageModel);
         imageList.setVisibleRowCount(5);
         imageList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
